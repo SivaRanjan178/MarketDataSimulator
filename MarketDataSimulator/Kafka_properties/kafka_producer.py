@@ -1,19 +1,22 @@
 from kafka import KafkaProducer
 import  kafka_config
 import json
+import logging
 
-def create_producer():
-    return KafkaProducer(
-        bootstrap_servers=kafka_config.KAFKA_BOOTSTRAP_SERVERS,
-        security_protocol=kafka_config.KAFKA_SECURITY_PROTOCOL,
-        sasl_mechanism=kafka_config.KAFKA_SASL_MECHANISM,
-        sasl_plain_username=kafka_config.KAFKA_SASL_USERNAME,
-        sasl_plain_password=kafka_config.KAFKA_SASL_PASSWORD,
-        value_serializer=lambda v: json.dumps(v).encode('utf-8')
-    )
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def send_message(topic, message):
-    producer = create_producer()
-    producer.send(topic, message)
-    producer.flush()
-    print(f"Message sent to topic {topic}: {message}")
+def send_to_kafka(topic, data):
+    try:
+        producer = KafkaProducer(bootstrap_servers='localhost:9092',
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+        producer.send(topic, data)
+        producer.flush()
+        logger.info(f"Sent message to topic {topic}: {data}")
+    except Exception as e:
+        logger.error(f"Failed to send message: {str(e)}")
+
+if __name__ == "__main__":
+    topic = 'market_data'
+    data = {'key': 'testKey', 'value': 'testValue'}  # Replace with your actual data
+    send_to_kafka(topic, data)
